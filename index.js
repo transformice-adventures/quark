@@ -1,26 +1,23 @@
 'use strict';
 
-async function loadManifest(uri) {
-    const manifestRequest = await fetch(uri);
-    return await manifestRequest.json();
-}
-
 (async function() {
-    /**
-     * Auto updater
-     */
-    const { version } = await loadManifest('./manifest.json');
-    const onlineManifest = await loadManifest(`https://github.com/transformice-adventures/quark/manifest.json?d=${Date.now()}`);
-
-    if (version.major !== onlineManifest.version.major || version.minor !== onlineManifest.version.minor || version.build !== onlineManifest.version.build) {
-        const quarkIndexRequest = await fetch(`https://github.com/transformice-adventures/quark/index.js?d=${Date.now()}`);
-        const quarkIndex = await quarkIndexRequest.arrayBuffer();
-
-        const { writeFile } = require('fs/promises');
-        
-        await writeFile('./index.js', quarkIndex);
+    const { register } = await import(new URL('./api/index.js', document.currentScript.src));
+    
+    document.head.querySelector("style").textContent += `.I_BoutonEtat .croix-active {position: relative;width:1em;height:1em;min-width:1em;min-height:1em;background-color: #281b12;border-radius: 0.2em;box-shadow: inset 1px 1px 1px #000000CC, inset -1px -1px 1px #927A5A;align-self: center;}.I_BoutonEtat .croix-active::after{position:absolute;content:'\\274c';font-size: 0.7em;margin-left:0.10em;color:#7BBD40;font-weight: bold;}`;
+    
+    const _define = define;
+    window.define = function(params, callback) {
+        return _define(params, function(...defargs) {
+            register(params, defargs);
+            callback(...defargs);
+        });
     }
-    /**
-     * EOF Auto Updater
-     */
+
+    const _require = require;
+    window.require = function(params, callback) {
+        return _require(params, function(...defargs) {
+            register(params, defargs);
+            callback(...defargs);
+        });
+    }
 })();
